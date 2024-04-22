@@ -17,35 +17,39 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
+    fetchData(offset);
     super.initState();
-    fetchData(offset,context);
   }
 
 
-  Future<void> fetchData(int offset,context) async {
-    final url = Uri.parse('http://dev3.xicom.us/xttest/getdata.php');
-    final response = await http.post(
-      url,
-      body: {'user_id': '108', 'offset': offset.toString(), 'type': 'popular'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final List<dynamic> images = data['images'];
-
-      setState(() {
-        if(images.length==0){
-          set = false;
-          showBar(context);
-        }
-        imageUrls.addAll(images.map((image) => image['xt_image'].toString()));
-        print("offset: $offset");
-
-
-      });
-
-    } else {
-      throw Exception('Failed to load images');
+  Future<void> fetchData(int offset) async {
+    try {
+      final url = Uri.parse('http://dev3.xicom.us/xttest/getdata.php');
+      final response = await http.post(
+        url,
+        body: {'user_id': '108', 'offset': offset.toString(), 'type': 'popular'},
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> images = data['images'];
+      
+        setState(() {
+          if(images.length==0){
+            set = false;
+            showBar(context);
+          }
+          imageUrls.addAll(images.map((image) => image['xt_image'].toString()));
+          print("offset: $offset");
+      
+      
+        });
+      
+      } else {
+        throw Exception('Failed to load images');
+      }
+    } on Exception catch (e) {
+      // TODO
     }
   }
   showBar(context){
@@ -62,15 +66,20 @@ class _HomeState extends State<Home> {
   }
 
   void loadMoreImages(context) {
-    if(offset==0){
-      offset = 1;
+    try {
+      if(offset==0){
+        offset = 1;
+      }
+        fetchData(offset++);
+    } on Exception catch (e) {
+      
     }
-      fetchData(offset++,context);
     // Adjust the offset as needed for pagination
   }
 
   @override
   Widget build(BuildContext context) {
+
     return  Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(
