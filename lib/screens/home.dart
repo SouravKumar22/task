@@ -40,7 +40,6 @@ class _HomeState extends State<Home> {
             showBar(context);
           }
           imageUrls.addAll(images.map((image) => image['xt_image'].toString()));
-          print("offset: $offset");
       
       
         });

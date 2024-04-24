@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -21,6 +23,7 @@ class _DetailsState extends State<Details> {
   TextEditingController _phone = TextEditingController();
   var pickedFile;
   var image_asset;
+  var responseResult;
   @override
   void initState() {
     image_asset = widget.img;
@@ -49,53 +52,52 @@ class _DetailsState extends State<Details> {
   }
 
   Future<void> Upload_Details(String pickedFilePath)  async {
-    try{
+    try {
       String fname = _fname.text.trim();
       String lname = _lname.text.trim();
-      String mail= _email.toString().trim();
-      String phone= _phone.toString().trim();
+      String mail = _email.text.toString().trim();
+      String phone = _phone.text.toString().trim();
 
-
-      var request = http.MultipartRequest(
+      final request = http.MultipartRequest(
         'POST',
         Uri.parse("http://dev3.xicom.us/xttest/savedata.php"),
       );
-      var user_image = await http.MultipartFile.fromPath('user_image', pickedFilePath);
+      var user_image = await http.MultipartFile.fromPath(
+          'user_image', pickedFilePath);
       request.files.add(user_image);
       request.fields['first_name'] = fname;
       request.fields['last_name'] = lname;
       request.fields['email'] = mail;
       request.fields['phone'] = phone;
-
-
-      // Send the request
-      var response= await request.send();
-      print("Status Code ${response.statusCode}");
-      if (response.statusCode == 200) {
-        print('API Response: ${response.statusCode}');
-        print("User Resgistered Successfully");
-        const snackBar = SnackBar(
-          duration: Duration(seconds: 3),
-          backgroundColor: Colors.black,
-          content: Text('Details Uploaded Successfully..',
-            style: TextStyle(
-                fontSize: 14,
-                color: Colors.white
-            ),),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      else {
-        // Error handling for unsuccessful response
-        print('API Request Failed: ${response.statusCode}');
-        print('Error Message: ${response.reasonPhrase}');
+      try{
+        final response = await request.send();
+        final responseData = await http.Response.fromStream(response);
+        if(responseData.statusCode==200){
+          final Map<String, dynamic> responseDataResult = json.decode(responseData.body);
+          print("Response: ${responseDataResult}");
+          responseResult = responseDataResult["message"];
+          var snackBar = SnackBar(
+            duration: Duration(seconds: 3),
+            backgroundColor: Colors.black,
+            content: Text('${responseResult.toString()}....',
+              style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white
+              ),),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        }
+      }catch(e){
+        print(e);
       }
     }
-    catch(error) {
+    catch (error) {
       // Handle other errors appropriately
-      throw Exception('Failed to perform login: $error}');
+      throw Exception('Failed to upload details: $error}');
     }
   }
+
+
   final _formKey = GlobalKey<FormState>();
   var imgNUll=false;
 
@@ -133,7 +135,6 @@ class _DetailsState extends State<Details> {
                       imgNUll=true;
                     // });
                     return Container(
-
                       margin: EdgeInsets.all(20.0),
                       padding: EdgeInsets.all(30.0),
                       color: Colors.grey,
@@ -310,6 +311,11 @@ class _DetailsState extends State<Details> {
                             return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(val!) ?
                             null : "Invalid Email";
                           },
+                          onChanged: (val){
+                            setState(() {
+                              _email.text=val;
+                            });
+                          },
                           style: TextStyle(
                               fontSize: 20,
                               color: Colors.black,
@@ -346,6 +352,9 @@ class _DetailsState extends State<Details> {
                         child: TextFormField(
                           validator: (value){
                           print("$value");
+                          if(value!.length!=10){
+                            return "Phone Number should be of 10 digits.";
+                          }
                           // final RegExp _nameRegex = RegExp('[a-zA-Z]'); // Regex for name validation
                           return value!.isNotEmpty?RegExp(r'^-?(([0-9]*)|(([0-9]*)\.([0-9]*)))$').hasMatch(value!)?null:"Only Numbers allowed":"Enter Phone Number";
                         },
