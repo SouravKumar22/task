@@ -311,11 +311,6 @@ class _DetailsState extends State<Details> {
                             return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(val!) ?
                             null : "Invalid Email";
                           },
-                          onChanged: (val){
-                            setState(() {
-                              _email.text=val;
-                            });
-                          },
                           style: TextStyle(
                               fontSize: 20,
                               color: Colors.black,
